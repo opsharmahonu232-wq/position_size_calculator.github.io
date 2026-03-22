@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Position Size Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --panel: #111118;
+      --border: #1e1e2e;
+      --accent: #00e5a0;
+      --accent2: #ff4d6d;
+      --accent3: #f5a623;
+      --text: #e8e8f0;
+      --muted: #555570;
+      --input-bg: #0d0d16;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 70% 20%, rgba(0,229,160,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(255,77,109,0.05) 0%, transparent 60%);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+    }
+
+    .header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .header span {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand {
+      padding: 0.55rem 2rem;
+      background: #0d0d16;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--accent2);
+    }
+
+    .brand-tag {
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .form {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .prefix {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      padding: 0.75rem 1rem 0.75rem 2.2rem;
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus { border-color: var(--accent); }
+
+    /* ── Slippage row ── */
+    .slippage-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .slippage-row .input-wrap {
+      width: 140px;
+      flex-shrink: 0;
+    }
+
+    /* range slider */
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent3);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent3);
+      border: none;
+      cursor: pointer;
+    }
+
+    /* slippage badge */
+    .slip-badge {
+      font-size: 0.7rem;
+      color: var(--accent3);
+      white-space: nowrap;
+      min-width: 52px;
+      text-align: right;
+    }
+
+    .slip-hint {
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-top: 0.3rem;
+    }
+
+    /* ── Toggle ── */
+    .toggle-group {
+      display: flex;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .toggle-btn.active { background: var(--accent); color: #000; }
+    .toggle-btn:not(.active):hover { color: var(--text); }
+
+    .risk-panel {
+      display: none;
+      flex-direction: column;
+      gap: 0.4rem;
+      animation: fadeField 0.25s ease;
+    }
+    .risk-panel.active { display: flex; }
+
+    @keyframes fadeField {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.2rem 0;
+    }
+
+    .btn {
+      margin-top: 0.4rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.1em;
+      padding: 0.85rem;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+
+    /* ── Result ── */
+    .result {
+      margin: 0 2rem 2rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 1.5rem;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result.show { display: block; }
+
+    .result-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: 0.04em;
+    }
+
+    .result-sub {
+      margin-top: 1.2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .result-sub-item .sub-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .result-sub-item .sub-value { font-size: 0.95rem; color: var(--text); }
+
+    .risk-amount  { color: var(--accent2); }
+    .slip-value   { color: var(--accent3); }
+
+    /* slippage row in results spans full width */
+    .result-sub-item.full { grid-column: 1 / -1; }
+
+    .slippage-note {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.65rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .error-msg {
+      margin: 0 2rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--accent2);
+      letter-spacing: 0.05em;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">Vulture Traders</span>
+    <span class="brand-tag">Official Tool</span>
+  </div>
+  <div class="header">
+    <h1>Position Sizer</h1>
+    <span>Risk Management Tool</span>
+  </div>
+
+  <div class="form">
+
+    <!-- Account Size -->
+    <div class="field">
+      <label>Account Size</label>
+      <div class="input-wrap">
+        <span class="prefix">₹</span>
+        <input type="number" id="accountSize" placeholder="10000" min="0" step="any"/>
+      </div>
+    </div>
+
+    <!-- Risk Mode Toggle -->
+    <div class="field">
+      <label>Risk Mode</label>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnPct"   onclick="setMode('pct')">% of Account</button>
+        <button class="toggle-btn"        id="btnFixed" onclick="setMode('fixed')">Fixed Amount (₹)</button>
+      </div>
+    </div>
+
+    <!-- % Risk -->
+    <div class="risk-panel active" id="panelPct">
+      <label>Risk Per Trade (%)</label>
+      <div class="input-wrap">
+        <span class="prefix">%</span>
+        <input type="number" id="riskPct" placeholder="1" min="0" max="100" step="any"/>
+      </div>
+    </div>
+
+    <!-- Fixed Amount -->
+    <div class="risk-panel" id="panelFixed">
+      <label>Fixed Risk Amount (₹)</label>
+      <div class="input-wrap">
+        <span class="prefix">₹</span>
+        <input type="number" id="riskFixed" placeholder="200" min="0" step="any"/>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Entry Price -->
+    <div class="field">
+      <label>Entry Price</label>
+      <div class="input-wrap">
+        <span class="prefix">₹</span>
+        <input type="number" id="entryPrice" placeholder="150.00" min="0" step="any"/>
+      </div>
+    </div>
+
+    <!-- Stop Loss -->
+    <div class="field">
+      <label>Stop Loss Price</label>
+      <div class="input-wrap">
+        <span class="prefix">₹</span>
+        <input type="number" id="stopLoss" placeholder="145.00" min="0" step="any"/>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Slippage -->
+    <div class="field">
+      <label>Slippage <span style="color:var(--accent3)">(max 0.5%)</span></label>
+      <div class="slippage-row">
+        <div class="input-wrap">
+          <span class="prefix">%</span>
+          <input type="number" id="slippageInput" placeholder="0.10" min="0" max="0.5" step="0.01"
+                 oninput="syncSlider(this.value)"/>
+        </div>
+        <input type="range" id="slippageRange" min="0" max="0.5" step="0.01" value="0.10"
+               oninput="syncInput(this.value)"/>
+        <span class="slip-badge" id="slipBadge">0.10%</span>
+      </div>
+      <div class="slip-hint">Accounts for the gap between your stop loss price and the actual fill price.</div>
+    </div>
+
+    <button class="btn" onclick="calculate()">CALCULATE</button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="result" id="result">
+    <div class="result-label">Shares to Buy</div>
+    <div class="result-value" id="shares">—</div>
+    <div class="result-sub">
+      <div class="result-sub-item">
+        <div class="sub-label">Risk Amount</div>
+        <div class="sub-value risk-amount" id="riskAmount">—</div>
+      </div>
+      <div class="result-sub-item">
+        <div class="sub-label">SL Distance (raw)</div>
+        <div class="sub-value" id="slDistance">—</div>
+      </div>
+      <div class="result-sub-item">
+        <div class="sub-label">Slippage Cost</div>
+        <div class="sub-value slip-value" id="slipCost">—</div>
+      </div>
+      <div class="result-sub-item">
+        <div class="sub-label">Effective SL Distance</div>
+        <div class="sub-value" id="slEffective">—</div>
+      </div>
+      <div class="result-sub-item">
+        <div class="sub-label">Position Value</div>
+        <div class="sub-value" id="posValue">—</div>
+      </div>
+      <div class="result-sub-item">
+        <div class="sub-label">% of Account</div>
+        <div class="sub-value" id="pctAccount">—</div>
+      </div>
+      <div class="result-sub-item full">
+        <div class="slippage-note" id="slippageNote"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let mode = 'pct';
+
+  // Sync slider → number input
+  function syncInput(val) {
+    val = Math.min(parseFloat(val), 0.5);
+    document.getElementById('slippageInput').value = val;
+    document.getElementById('slipBadge').textContent = parseFloat(val).toFixed(2) + '%';
+  }
+
+  // Sync number input → slider
+  function syncSlider(val) {
+    val = Math.min(parseFloat(val) || 0, 0.5);
+    document.getElementById('slippageRange').value = val;
+    document.getElementById('slipBadge').textContent = val.toFixed(2) + '%';
+  }
+
+  // Init badge
+  document.getElementById('slippageInput').value = '0.10';
+  syncSlider('0.10');
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('panelPct').classList.toggle('active', m === 'pct');
+    document.getElementById('panelFixed').classList.toggle('active', m === 'fixed');
+    document.getElementById('btnPct').classList.toggle('active', m === 'pct');
+    document.getElementById('btnFixed').classList.toggle('active', m === 'fixed');
+    document.getElementById('result').classList.remove('show');
+    document.getElementById('errorMsg').classList.remove('show');
+  }
+
+  function fmt(n, decimals = 2) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('show');
+    document.getElementById('result').classList.remove('show');
+  }
+
+  function calculate() {
+    document.getElementById('errorMsg').classList.remove('show');
+
+    const account  = parseFloat(document.getElementById('accountSize').value);
+    const entry    = parseFloat(document.getElementById('entryPrice').value);
+    const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+    let slippage   = parseFloat(document.getElementById('slippageInput').value);
+
+    if (isNaN(account)  || account  <= 0) return showError('⚠ Please enter a valid account size.');
+    if (isNaN(entry)    || entry    <= 0) return showError('⚠ Please enter a valid entry price.');
+    if (isNaN(stopLoss) || stopLoss <= 0) return showError('⚠ Please enter a valid stop loss price.');
+    if (entry === stopLoss)               return showError('⚠ Entry price and stop loss cannot be the same.');
+
+    // Clamp slippage silently
+    if (isNaN(slippage) || slippage < 0) slippage = 0;
+    if (slippage > 0.5) {
+      slippage = 0.5;
+      document.getElementById('slippageInput').value = '0.50';
+      syncSlider('0.50');
+    }
+
+    let riskAmount;
+    if (mode === 'pct') {
+      const riskPct = parseFloat(document.getElementById('riskPct').value);
+      if (isNaN(riskPct) || riskPct <= 0) return showError('⚠ Please enter a valid risk percentage.');
+      if (riskPct > 100)                  return showError('⚠ Risk percentage cannot exceed 100%.');
+      riskAmount = account * (riskPct / 100);
+    } else {
+      riskAmount = parseFloat(document.getElementById('riskFixed').value);
+      if (isNaN(riskAmount) || riskAmount <= 0) return showError('⚠ Please enter a valid fixed risk amount.');
+      if (riskAmount >= account)                return showError('⚠ Fixed risk cannot exceed your account size.');
+    }
+
+    // Determine long vs short
+    const isLong = entry > stopLoss;
+
+    // Raw SL distance
+    const rawSLDist = Math.abs(entry - stopLoss);
+
+    // Slippage: the stop fill will be worse than SL price
+    // Long trade → fill below SL price → extra loss per share = stopLoss * (slippage/100)
+    // Short trade → fill above SL price → extra loss per share = stopLoss * (slippage/100)
+    const slippagePerShare = stopLoss * (slippage / 100);
+    const effectiveSLDist  = rawSLDist + slippagePerShare;
+
+    const shares     = Math.floor(riskAmount / effectiveSLDist);
+    const posValue   = shares * entry;
+    const pctAccount = (posValue / account) * 100;
+    const totalSlipCost = slippagePerShare * shares;
+
+    // Effective stop fill price
+    const effectiveFill = isLong
+      ? (stopLoss - slippagePerShare).toFixed(4)
+      : (stopLoss + slippagePerShare).toFixed(4);
+
+    document.getElementById('shares').textContent     = shares.toLocaleString();
+    document.getElementById('riskAmount').textContent = '₹ ' + fmt(riskAmount);
+    document.getElementById('slDistance').textContent = '₹ ' + fmt(rawSLDist);
+    document.getElementById('slipCost').textContent   = slippage === 0 ? '₹ 0.00' : '+ ₹ ' + fmt(slippagePerShare) + ' / share';
+    document.getElementById('slEffective').textContent = '₹ ' + fmt(effectiveSLDist);
+    document.getElementById('posValue').textContent   = '₹ ' + fmt(posValue);
+    document.getElementById('pctAccount').textContent = fmt(pctAccount) + ' %';
+
+    // Slippage note
+    const noteEl = document.getElementById('slippageNote');
+    if (slippage === 0) {
+      noteEl.textContent = 'No slippage applied. Calculation assumes exact stop loss fill.';
+    } else {
+      noteEl.innerHTML =
+        `With <span style="color:var(--accent3)">${slippage.toFixed(2)}%</span> slippage, ` +
+        `your stop fill is estimated at <span style="color:var(--accent3)">₹${effectiveFill}</span> ` +
+        `instead of ₹${fmt(stopLoss)}. ` +
+        `Total extra exposure: <span style="color:var(--accent3)">₹${fmt(totalSlipCost)}</span>.`;
+    }
+
+    document.getElementById('result').classList.add('show');
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+</script>
+</body>
+</html>
